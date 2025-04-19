@@ -12,10 +12,10 @@ public class MainMenu {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Для входа в систему введите логин:");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().trim();
 
         System.out.println("Введите пароль:");
-        String password = scanner.nextLine();
+        String password = scanner.nextLine().trim();
 
         String role = AuthService.login(username, password);
 
@@ -41,7 +41,7 @@ public class MainMenu {
         com.hospital.dao.PatientDAO patientDAO = new com.hospital.dao.PatientDAO();
 
         System.out.print("Введите ваш user_id: ");
-        int userId = Integer.parseInt(scanner.nextLine());
+        int userId = Integer.parseInt(scanner.nextLine().trim());
 
         int patientId = patientDAO.getPatientIdByUserId(userId);
         if (patientId == -1) {
@@ -56,7 +56,7 @@ public class MainMenu {
             System.out.println("3. Посмотреть даты лечения");
             System.out.println("0. Выход");
             System.out.print("Выбор: ");
-            String choice = scanner.nextLine();
+            String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1" -> patientDAO.showPersonalInfo(patientId);
@@ -88,7 +88,7 @@ public class MainMenu {
             System.out.println("6. Поиск пациента");
             System.out.println("0. Выход");
             System.out.print("Выбор: ");
-            String choice = scanner.nextLine();
+            String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1" -> {
@@ -109,9 +109,9 @@ public class MainMenu {
                 }
                 case "4" -> {
                     System.out.print("Введите nurse_id: ");
-                    int nid = Integer.parseInt(scanner.nextLine());
+                    int nid = Integer.parseInt(scanner.nextLine().trim());
                     System.out.print("Введите текст поручения: ");
-                    String desc = scanner.nextLine();
+                    String desc = scanner.nextLine().trim();
                     dao.addNurseTask(nid, desc);
                 }
                 case "5" -> {
@@ -122,7 +122,7 @@ public class MainMenu {
                 }
                 case "6" -> {
                     System.out.print("Введите часть имени пациента: ");
-                    String search = scanner.nextLine();
+                    String search = scanner.nextLine().trim();
 
                     List<Integer> foundIds = dao.findPatientsByName(search);
                     if (foundIds.isEmpty()) {
@@ -131,7 +131,7 @@ public class MainMenu {
                     }
 
                     System.out.print("Введите ID пациента для действий: ");
-                    int patientId = Integer.parseInt(scanner.nextLine());
+                    int patientId = Integer.parseInt(scanner.nextLine().trim());
 
                     while (true) {
                         System.out.println("🔍 Работа с пациентом ID=" + patientId);
@@ -140,14 +140,14 @@ public class MainMenu {
                         System.out.println("3. Добавить диагноз");
                         System.out.println("0. Назад");
                         System.out.print("Выбор: ");
-                        String sub = scanner.nextLine();
+                        String sub = scanner.nextLine().trim();
 
                         switch (sub) {
                             case "1" -> dao.getPatientInfo(patientId);
                             case "2" -> dao.getMedicalHistory(patientId);
                             case "3" -> {
                                 System.out.print("Введите текст диагноза: ");
-                                String diag = scanner.nextLine();
+                                String diag = scanner.nextLine().trim();
                                 dao.addDiagnosis(patientId, diag);
                             }
                             case "0" -> { break; }
@@ -172,7 +172,7 @@ public class MainMenu {
         com.hospital.dao.NurseDAO nurseDAO = new com.hospital.dao.NurseDAO();
 
         System.out.print("Введите ваш nurse_id: ");
-        int nurseId = Integer.parseInt(scanner.nextLine());
+        int nurseId = Integer.parseInt(scanner.nextLine().trim());
 
         while (true) {
             System.out.println("📋 Меню медсестры:");
@@ -182,7 +182,7 @@ public class MainMenu {
             System.out.println("4. Найти пациента по имени");
             System.out.println("0. Выход");
             System.out.print("Выбор: ");
-            String choice = scanner.nextLine();
+            String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1" -> {
@@ -196,7 +196,7 @@ public class MainMenu {
                 }
                 case "2" -> {
                     System.out.print("Введите ID поручения для завершения: ");
-                    int taskId = Integer.parseInt(scanner.nextLine());
+                    int taskId = Integer.parseInt(scanner.nextLine().trim());
                     nurseDAO.completeTask(taskId);
                 }
                 case "3" -> {
@@ -210,7 +210,7 @@ public class MainMenu {
                 }
                 case "4" -> {
                     System.out.print("Введите часть имени пациента: ");
-                    String search = scanner.nextLine();
+                    String search = scanner.nextLine().trim();
                     var results = nurseDAO.findPatientsByName(search);
                     if (results.isEmpty()) {
                         System.out.println("Пациенты не найдены.");
@@ -242,38 +242,38 @@ public class MainMenu {
             System.out.println("7. Сотрудник с минимальной зарплатой");
             System.out.println("0. Выход");
             System.out.print("Выбор: ");
-            String choice = scanner.nextLine();
+            String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1" -> staffDAO.showNurses();
                 case "2" -> staffDAO.showDoctors();
                 case "3" -> {
                     System.out.print("Введите user_id медсестры: ");
-                    int userId = Integer.parseInt(scanner.nextLine());
+                    int userId = Integer.parseInt(scanner.nextLine().trim());
 
                     System.out.print("Введите ФИО: ");
                     String fullName = scanner.nextLine();
 
                     System.out.print("Введите дату приёма (ГГГГ-ММ-ДД): ");
-                    Date hireDate = Date.valueOf(scanner.nextLine());
+                    Date hireDate = Date.valueOf(scanner.nextLine().trim());
 
                     System.out.print("Введите зарплату: ");
-                    double salary = Double.parseDouble(scanner.nextLine());
+                    double salary = Double.parseDouble(scanner.nextLine().trim());
 
                     staffDAO.addNurse(userId, fullName, hireDate, salary);
                 }
                 case "4" -> {
                     System.out.print("Введите user_id врача: ");
-                    int userId = Integer.parseInt(scanner.nextLine());
+                    int userId = Integer.parseInt(scanner.nextLine().trim());
 
                     System.out.print("Введите ФИО: ");
-                    String fullName = scanner.nextLine();
+                    String fullName = scanner.nextLine().trim();
 
                     System.out.print("Введите дату приёма (ГГГГ-ММ-ДД): ");
-                    Date hireDate = Date.valueOf(scanner.nextLine());
+                    Date hireDate = Date.valueOf(scanner.nextLine().trim());
 
                     System.out.print("Введите зарплату: ");
-                    double salary = Double.parseDouble(scanner.nextLine());
+                    double salary = Double.parseDouble(scanner.nextLine().trim());
 
                     staffDAO.addDoctor(userId, fullName, hireDate, salary);
                 }
