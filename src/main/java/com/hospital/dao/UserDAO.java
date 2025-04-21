@@ -8,69 +8,73 @@ public class UserDAO {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/hospital_db";
     private static final String USER = "postgres";
-    private static final String PASSWORD = "Erzhan123@"; // замени
+    private static final String PASSWORD = "Erzhan123@"; // замените на ваш пароль
 
-    // Добавление пользователя по имени роли
-    public void createUser(String username, String password, String roleName) {
+    /**
+     * Создаёт пользователя и возвращает его ID
+     */
+    public int createUser(String username, String password, String roleName) {
         String getRoleIdSql = "SELECT id FROM roles WHERE name = ?";
         String insertUserSql = "INSERT INTO users(username, password, role_id) VALUES (?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
-
-            // Получаем role_id по имени
-            int roleId = -1;
+            conn.setAutoCommit(false);
+            int roleId;
             try (PreparedStatement roleStmt = conn.prepareStatement(getRoleIdSql)) {
                 roleStmt.setString(1, roleName);
                 try (ResultSet rs = roleStmt.executeQuery()) {
                     if (rs.next()) {
                         roleId = rs.getInt("id");
                     } else {
-                        System.err.println("❌ Роль не найдена: " + roleName);
-                        return;
+                        conn.rollback();
+                        return -1;
                     }
                 }
             }
 
-            // Вставляем пользователя
-            try (PreparedStatement insertStmt = conn.prepareStatement(insertUserSql)) {
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS)) {
                 insertStmt.setString(1, username);
                 insertStmt.setString(2, password);
                 insertStmt.setInt(3, roleId);
                 insertStmt.executeUpdate();
-                System.out.println("✔ Пользователь добавлен: " + username);
+                try (ResultSet keys = insertStmt.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        int newId = keys.getInt(1);
+                        conn.commit();
+                        System.out.println("✔ Пользователь добавлен: " + username + " (ID=" + newId + ")");
+                        return newId;
+                    }
+                }
             }
-
+            conn.commit();
         } catch (SQLException e) {
+            // Если уникальность нарушена (код 23505), просто возвращаем -1, без вывода стека
+            if ("23505".equals(e.getSQLState())) {
+                return -1;
+            }
             System.err.println("Ошибка при добавлении пользователя:");
             e.printStackTrace();
         }
+        return -1;
     }
 
-    // Получение всех пользователей (с ролями)
+    /**
+     * Возвращает список всех пользователей с их ролями
+     */
     public List<String> getAllUsers() {
         List<String> users = new ArrayList<>();
-        String sql = """
-            SELECT u.username, r.name AS role
-            FROM users u
-            JOIN roles r ON u.role_id = r.id
-        """;
+        String sql = "SELECT u.username, r.name AS role FROM users u JOIN roles r ON u.role_id = r.id";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-
             while (rs.next()) {
-                String username = rs.getString("username");
-                String role = rs.getString("role");
-                users.add(username + " (" + role + ")");
+                users.add(rs.getString("username") + " (" + rs.getString("role") + ")");
             }
-
         } catch (SQLException e) {
             System.err.println("Ошибка при получении пользователей:");
             e.printStackTrace();
         }
-
         return users;
     }
 }
-
