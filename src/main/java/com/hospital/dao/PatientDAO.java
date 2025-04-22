@@ -143,6 +143,23 @@ public class PatientDAO {
             e.printStackTrace();
         }
     }
+    // Удалить пациента по user_id
+    public void deletePatient(int userId) {
+        String sql = "DELETE FROM patients WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            int cnt = stmt.executeUpdate();
+            if (cnt > 0) {
+                System.out.println("✔ Пациент с user_id=" + userId + " удалён.");
+            } else {
+                System.out.println("❌ Пациент с таким user_id не найден.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при удалении пациента:");
+            e.printStackTrace();
+        }
+    }
 
 }
 

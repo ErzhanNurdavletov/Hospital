@@ -29,7 +29,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при получении списка медсестёр:");
-            e.printStackTrace();
         }
     }
 
@@ -54,7 +53,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при получении списка врачей:");
-            e.printStackTrace();
         }
     }
     // Добавить врача (user_id можно получить из users)
@@ -77,7 +75,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении врача:");
-            e.printStackTrace();
         }
     }
 
@@ -101,7 +98,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении медсестры:");
-            e.printStackTrace();
         }
     }
     // Подсчёт всех пациентов
@@ -118,7 +114,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при подсчёте пациентов:");
-            e.printStackTrace();
         }
         return 0;
     }
@@ -147,7 +142,6 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при поиске сотрудника с максимальной зарплатой:");
-            e.printStackTrace();
         }
         return "Данных нет";
     }
@@ -177,9 +171,41 @@ public class StaffDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при поиске сотрудника с минимальной зарплатой:");
-            e.printStackTrace();
         }
         return "Данных нет";
+    }
+    // Удалить лечащего врача по user_id
+    public void deleteDoctor(int userId) {
+        String sql = "DELETE FROM doctors WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            int cnt = stmt.executeUpdate();
+            if (cnt > 0) {
+                System.out.println("✔ Врач с user_id=" + userId + " удалён.");
+            } else {
+                System.out.println("❌ Врач с таким user_id не найден.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при удалении врача:");
+        }
+    }
+
+    // Удалить медсестру по user_id
+    public void deleteNurse(int userId) {
+        String sql = "DELETE FROM nurses WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            int cnt = stmt.executeUpdate();
+            if (cnt > 0) {
+                System.out.println("✔ Медсестра с user_id=" + userId + " удалена.");
+            } else {
+                System.out.println("❌ Медсестра с таким user_id не найдена.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при удалении медсестры:");
+        }
     }
 
 }

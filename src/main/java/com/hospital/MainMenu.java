@@ -193,12 +193,18 @@ public class MainMenu {
             System.out.println("\n📋 Меню главврача:");
             System.out.println("1. Показать список медсестёр");
             System.out.println("2. Показать список лечащих врачей");
+            System.out.println("----------------------------------");
             System.out.println("3. Добавить пациента");
             System.out.println("4. Добавить медсестру");
             System.out.println("5. Добавить лечащего врача");
+            System.out.println("----------------------------------");
             System.out.println("6. Показать количество пациентов");
             System.out.println("7. Сотрудник с максимальной зарплатой");
             System.out.println("8. Сотрудник с минимальной зарплатой");
+            System.out.println("----------------------------------");
+            System.out.println("9. Удалить медсестру");
+            System.out.println("10. Удалить врача");
+            System.out.println("11. Удалить пациента");
             System.out.println("0. Назад");
             System.out.print("Выбор: ");
             String choice = scanner.nextLine().trim();
@@ -268,16 +274,19 @@ public class MainMenu {
                     try {
                         System.out.print("ФИО: ");
                         String fn = scanner.nextLine().trim();
+                        if (fn.isEmpty()) {
+                            throw new IllegalArgumentException("Некорректное ФИО");
+                        }
                         System.out.print("Дата приёма (ГГГГ-ММ-ДД): ");
                         Date hd = Date.valueOf(scanner.nextLine().trim());
                         System.out.print("Зарплата: ");
                         double sal = Double.parseDouble(scanner.nextLine());
-                        if (fn.isEmpty() || sal <= 0) {
-                            throw new IllegalArgumentException();
+                        if (sal <= 0) {
+                            throw new IllegalArgumentException("Зарплата не может быть отрицательной или ноль");
                         }
                         int uid = userDAO.createUser(login, pwd, "medassistant");
                         if (uid < 0) {
-                            throw new SQLException();
+                            throw new IllegalArgumentException("Такой логин уже существует");
                         }
                         staffDAO.addNurse(uid, fn, hd, sal);
                     } catch (Exception e) {
@@ -297,16 +306,19 @@ public class MainMenu {
                     try {
                         System.out.print("ФИО: ");
                         String fn = scanner.nextLine().trim();
+                        if (fn.isEmpty()) {
+                            throw new IllegalArgumentException("Некорректное ФИО");
+                        }
                         System.out.print("Дата приёма (ГГГГ-ММ-ДД): ");
                         Date hd = Date.valueOf(scanner.nextLine().trim());
                         System.out.print("Зарплата: ");
                         double sal = Double.parseDouble(scanner.nextLine());
-                        if (fn.isEmpty() || sal <= 0) {
-                            throw new IllegalArgumentException();
+                        if (sal <= 0) {
+                            throw new IllegalArgumentException("Зарплата не может быть отрицательной или ноль");
                         }
                         int uid = userDAO.createUser(login, pwd, "doctor");
                         if (uid < 0) {
-                            throw new SQLException();
+                            throw new IllegalArgumentException("Такой логин уже существует");
                         }
                         staffDAO.addDoctor(uid, fn, hd, sal);
                     } catch (Exception e) {
@@ -316,6 +328,34 @@ public class MainMenu {
                 case "6" -> System.out.println("🔢 Всего пациентов: " + staffDAO.getPatientCount());
                 case "7" -> System.out.println("🚀 Макс. зарплата: " + staffDAO.getMaxSalaryStaff());
                 case "8" -> System.out.println("🐢 Мин. зарплата: " + staffDAO.getMinSalaryStaff());
+                case "9" -> {
+                    try {
+                        System.out.print("Введите user_id медсестры для удаления: ");
+                        int uid = Integer.parseInt(scanner.nextLine());
+                        staffDAO.deleteNurse(uid);
+                    } catch (Exception e) {
+                        System.out.println("Некорректный user_id");
+                    }
+                }
+                case "10" -> {
+                    try {
+                        System.out.print("Введите user_id врача для удаления: ");
+                        int uid = Integer.parseInt(scanner.nextLine());
+                        staffDAO.deleteDoctor(uid);
+                    } catch (Exception e) {
+                        System.out.println("Некорректный user_id");
+                    }
+                }
+                case "11" -> {
+                    try {
+                        System.out.print("Введите user_id пациента для удаления: ");
+                        int uid = Integer.parseInt(scanner.nextLine());
+                        patientDAO.deletePatient(uid);
+                    } catch (Exception e) {
+                        System.out.println("Некорректный user_id");
+                    }
+                }
+
                 case "0" -> {
                     return;
                 }
