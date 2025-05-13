@@ -35,11 +35,13 @@ public class MainMenu {
                 System.out.println("❌ Неверный тип аккаунта, логин или пароль.");
                 continue;
             }
+            UserDAO userDAO = new UserDAO();
+            int currentUserId = userDAO.getUserIdByUsername(login);
 
             switch (role) {
                 case "patient"      -> showPatientMenu(scanner);
                 case "doctor"       -> showDoctorMenu(scanner);
-                case "medassistant" -> showNurseMenu(scanner);
+                case "medassistant" -> showNurseMenu(scanner, currentUserId);
                 case "maindoctor"   -> showMainDoctorMenu(scanner);
                 default               -> System.out.println("❌ Неизвестная роль.");
             }
@@ -85,25 +87,27 @@ public class MainMenu {
     }
 
     private static void showDoctorMenu(Scanner scanner) {
-        DoctorDAO dao = new DoctorDAO();
-
+        DoctorDAO dao       = new DoctorDAO();
+        StaffDAO staffDAO = new StaffDAO();
         while (true) {
             System.out.println("\n--- Меню лечащего врача ---");
             System.out.println("1. Показать список пациентов");
-            System.out.println("2. Написать поручение для медсестры");
-            System.out.println("3. Показать не завершённые поручения");
-            System.out.println("4. Показать завершённые поручения");
-            System.out.println("5. Поиск пациента");
+            System.out.println("2. Показать спиоск медсестер");
+            System.out.println("3. Написать поручение для медсестры");
+            System.out.println("4. Показать не завершённые поручения");
+            System.out.println("5. Показать завершённые поручения");
+            System.out.println("6. Поиск пациента");
             System.out.println("0. Назад");
             System.out.print("Выбор: ");
             String c = scanner.nextLine().trim();
             if ("0".equals(c)) break;
             switch (c) {
                 case "1" -> dao.getCurrentPatients().forEach(p -> System.out.println("– " + p));
-                case "2" -> {
+                case "2" -> staffDAO.showNurses();
+                case "3" -> {
                     int nid;
                     while (true) {
-                        System.out.print("Введите nurse_id: ");
+                        System.out.print("Введите user_id медсестры: ");
                         try { nid = Integer.parseInt(scanner.nextLine().trim()); break; }
                         catch (NumberFormatException e) { System.out.println("❌ Введите числовой ID."); }
                     }
@@ -112,53 +116,85 @@ public class MainMenu {
                     if (!desc.isEmpty()) dao.addNurseTask(nid, desc);
                     else System.out.println("❌ Описание не должно быть пустым.");
                 }
-                case "3" -> dao.getPendingNurseTasks().forEach(t -> System.out.println("– " + t));
-                case "4" -> dao.getCompletedNurseTasks().forEach(t -> System.out.println("– " + t));
-                case "5" -> {
-                    System.out.print("Часть имени: ");
-                    String part = scanner.nextLine().trim();
-                    if (part.isEmpty()) { System.out.println("❌ Строка не должна быть пустой."); break; }
-                    List<Integer> ids = dao.findPatientsByName(part);
-                    if (ids.isEmpty()) { System.out.println("Пациенты не найдены."); break; }
+                case "4" -> dao.getPendingNurseTasks().forEach(t -> System.out.println("– " + t));
+                case "5" -> dao.getCompletedNurseTasks().forEach(t -> System.out.println("– " + t));
+                case "6" -> {
+                    PatientDAO patDao = new PatientDAO();
+
+                    // 1) Ввод и проверка user_id
                     int pid;
                     while (true) {
-                        System.out.print("Введите ID пациента: ");
-                        try { pid = Integer.parseInt(scanner.nextLine().trim()); break; }
-                        catch (NumberFormatException e) { System.out.println("❌ Введите числовой ID."); }
+                        System.out.print("Введите user_id пациента: ");
+                        String line = scanner.nextLine().trim();
+                        try {
+                            pid = Integer.parseInt(line);
+                            if (patDao.getPatientIdByUserId(pid) < 0) {
+                                System.out.println("❌ Пациент с таким user_id не найден.");
+                                continue;
+                            }
+                            break;
+                        } catch (NumberFormatException e) {
+                            System.out.println("❌ Введите корректный числовой ID.");
+                        }
                     }
+
+                    // 2) Загрузка списка допустимых диагнозов
+                    List<String> allowed = dao.getAllowedDiagnoses();
+                    if (allowed.isEmpty()) {
+                        System.out.println("❌ Список диагнозов пуст. Обратитесь к администратору.");
+                        break;
+                    }
+
+                    // 3) Подменю пациента
                     while (true) {
-                        System.out.println("1. Информация");
-                        System.out.println("2. История болезни");
+                        System.out.println("\n--- Работа с пациентом user_id=" + pid + " ---");
+                        System.out.println("1. Показать информацию");
+                        System.out.println("2. Показать историю болезни");
                         System.out.println("3. Добавить диагноз");
                         System.out.println("0. Назад");
                         System.out.print("Выбор: ");
                         String sub = scanner.nextLine().trim();
-                        if ("0".equals(sub)) break;
+
                         switch (sub) {
-                            case "1" -> dao.getPatientInfo(pid);
-                            case "2" -> dao.getMedicalHistory(pid);
+                            case "1" -> patDao.showPersonalInfo(patDao.getPatientIdByUserId(pid));
+                            case "2" -> patDao.showMedicalHistory(patDao.getPatientIdByUserId(pid));
                             case "3" -> {
-                                System.out.print("Введите диагноз: ");
+                                System.out.println("Доступные диагнозы:");
+                                allowed.forEach(d -> System.out.println("– " + d));
+
+                                System.out.print("Введите диагноз из списка: ");
                                 String diag = scanner.nextLine().trim();
-                                if (!diag.isEmpty()) dao.addDiagnosis(pid, diag);
-                                else System.out.println("❌ Описание диагноза пустое.");
+                                if (allowed.contains(diag)) {
+                                    dao.addDiagnosis(patDao.getPatientIdByUserId(pid), diag);
+                                } else {
+                                    System.out.println("❌ Такого диагноза нет в списке.");
+                                }
                             }
-                            default -> System.out.println("❌ Неверный ввод.");
+                            case "0" -> { break; }
+                            default  -> System.out.println("❌ Неверный ввод.");
                         }
+
+                        if ("0".equals(sub)) break;
                     }
                 }
+
+
                 default -> System.out.println("❌ Неверный ввод.");
             }
         }
     }
 
-    private static void showNurseMenu(Scanner scanner) {
+    private static void showNurseMenu(Scanner scanner, int currentUserId) {
         NurseDAO dao = new NurseDAO();
-        int nurseId;
-        while (true) {
-            System.out.print("Введите nurse_id: ");
-            try { nurseId = Integer.parseInt(scanner.nextLine().trim()); break; }
-            catch (NumberFormatException e) { System.out.println("❌ Введите корректный числовой ID."); }
+        int nurseId = 0;
+        try {
+            nurseId = dao.getNurseIdByUserId(currentUserId);
+        } catch (Exception e) {
+            System.out.println("Ошибка при поиске nurse id");
+        }
+        if (nurseId < 0) {
+            System.out.println("❌ Профиль медсестры не найден.");
+            return;
         }
 
         while (true) {
@@ -301,6 +337,10 @@ public class MainMenu {
                         String login = scanner.nextLine().trim();
                         System.out.print("Пароль: ");
                         String pwd = scanner.nextLine().trim();
+                        if (login.isBlank() || pwd.isBlank()) {
+                            System.out.println("❌ Ошибка");
+                            continue;
+                        }
                         uid = userDAO.createUser(login, pwd, "patient");
                         if (uid < 0) System.out.println("❌ Логин занят или ошибка. Попробуйте другой.");
                     }

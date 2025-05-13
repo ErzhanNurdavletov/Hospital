@@ -26,7 +26,6 @@ public class PatientDAO {
             System.out.println("✔ Пациент добавлен: " + fullName);
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении пациента:");
-            e.printStackTrace();
         }
     }
 
@@ -48,7 +47,6 @@ public class PatientDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении информации пациента:");
-            e.printStackTrace();
         }
     }
 
@@ -65,7 +63,6 @@ public class PatientDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении истории болезни:");
-            e.printStackTrace();
         }
     }
 
@@ -82,7 +79,6 @@ public class PatientDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении последнего диагноза:");
-            e.printStackTrace();
         }
         return null;
     }
@@ -102,7 +98,6 @@ public class PatientDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении списка пациентов:");
-            e.printStackTrace();
         }
         return patients;
     }
@@ -118,7 +113,6 @@ public class PatientDAO {
             else System.out.println("❌ Пациент не найден.");
         } catch (SQLException e) {
             System.err.println("Ошибка при удалении пациента:");
-            e.printStackTrace();
         }
     }
 
@@ -133,7 +127,6 @@ public class PatientDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении ID пациента по user_id:");
-            e.printStackTrace();
         }
         return -1;
     }

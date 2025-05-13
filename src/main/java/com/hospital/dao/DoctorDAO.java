@@ -1,5 +1,9 @@
 package com.hospital.dao;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,36 +14,78 @@ public class DoctorDAO {
     private static final String PASSWORD = "Erzhan123@"; // замените
 
     // Список пациентов
-    public List<String> getCurrentPatients() {
-        List<String> patients = new ArrayList<>();
-        String sql = "SELECT p.full_name, u.username FROM patients p JOIN users u ON p.user_id = u.id";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                patients.add(rs.getString("full_name") + " (" + rs.getString("username") + ")");
+    public List<String> getAllowedDiagnoses() {
+        List<String> diagnoses = new ArrayList<>();
+        String filePath = "src/main/resources/diagnos.txt"; // путь к файлу
+
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                diagnoses.add(line.trim());
             }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении списка пациентов:");
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("Ошибка при чтении файла diagnos.txt:");
         }
-        return patients;
+
+        return diagnoses;
+    }
+    public List<String> getCurrentPatients() {
+        List<String> result = new ArrayList<>();
+        String sql = """
+        SELECT u.id, p.full_name
+        FROM patients p
+        JOIN users u ON p.user_id = u.id
+        ORDER BY p.full_name;
+        """;
+        try (Connection c = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = c.prepareStatement(sql);
+             ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                int uid = rs.getInt("id");
+                String name = rs.getString("full_name");
+                result.add(name + " (user_id: " + uid + ")");
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Ошибка при получении списка пациентов:");
+        }
+        return result;
     }
 
+
     // Написать поручение медсестре
-    public void addNurseTask(int nurseId, String taskDescription) {
-        String sql = "INSERT INTO nurse_tasks(nurse_id, task_description) VALUES (?, ?)";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, nurseId);
-            stmt.setString(2, taskDescription);
-            stmt.executeUpdate();
-            System.out.println("✔ Поручение добавлено медсестре ID=" + nurseId);
+    public void addNurseTask(int userId, String taskDescription) {
+        try {
+            int nurseId = findNurseRecordId(userId);
+            if (nurseId < 0) {
+                System.out.println("❌ Медсестра с таким user_id не найдена.");
+                return;
+            }
+            String sql = "INSERT INTO nurse_tasks(nurse_id, task_description) VALUES (?, ?)";
+            try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, nurseId);
+                stmt.setString(2, taskDescription);
+                stmt.executeUpdate();
+                System.out.println("✔ Поручение добавлено медсестре user_id=" + userId);
+            }
         } catch (SQLException e) {
-            System.err.println("Ошибка при добавлении поручения:");
-            e.printStackTrace();
+            System.out.println("❌ Ошибка при добавлении поручения:");
         }
     }
+
+    // возвращает nurses.id по users.id
+    private int findNurseRecordId(int userId) throws SQLException {
+        String sql = "SELECT id FROM nurses WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+                else return -1;
+            }
+        }
+    }
+
 
     // Поручения не завершённые
     public List<String> getPendingNurseTasks() {
@@ -54,7 +100,6 @@ public class DoctorDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении поручений:");
-            e.printStackTrace();
         }
         return tasks;
     }
@@ -72,7 +117,6 @@ public class DoctorDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении завершённых поручений:");
-            e.printStackTrace();
         }
         return tasks;
     }
@@ -91,47 +135,68 @@ public class DoctorDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при поиске пациентов:");
-            e.printStackTrace();
         }
         return ids;
     }
 
     // Информация о пациенте
-    public void getPatientInfo(int patientId) {
-        String sql = "SELECT full_name, birth_date, height_cm, weight_kg, blood_group, rhesus FROM patients WHERE id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, patientId);
-            try (ResultSet rs = stmt.executeQuery()) {
+    public void getPatientInfo(int userId) {
+        String sql = """
+        SELECT p.full_name, p.birth_date, p.height_cm, p.weight_kg, p.blood_type
+        FROM patients p
+        JOIN users u ON p.user_id = u.id
+        WHERE u.id = ?;
+        """;
+        try (Connection c = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = c.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    System.out.printf("ФИО: %s, ДР: %s, рост: %d, вес: %d, кровь: %s%s%n",
-                            rs.getString("full_name"), rs.getDate("birth_date"),
-                            rs.getInt("height_cm"), rs.getInt("weight_kg"),
-                            rs.getString("blood_group"), rs.getString("rhesus"));
+                    System.out.println("🧾 Информация о пациенте:");
+                    System.out.println("ФИО: " + rs.getString("full_name"));
+                    System.out.println("Дата рождения: " + rs.getDate("birth_date"));
+                    System.out.println("Рост: " + rs.getInt("height_cm") + " см");
+                    System.out.println("Вес: " + rs.getInt("weight_kg") + " кг");
+                    System.out.println("Группа крови: " + rs.getString("blood_type"));
+                } else {
+                    System.out.println("❌ Пациент не найден.");
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении информации о пациенте:");
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("❌ Ошибка при получении информации:");
         }
     }
 
+
     // История болезни пациента
-    public void getMedicalHistory(int patientId) {
-        String sql = "SELECT record_date, description FROM medical_history WHERE patient_id = ? ORDER BY record_date DESC";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, patientId);
-            try (ResultSet rs = stmt.executeQuery()) {
+    public void getMedicalHistory(int userId) {
+        String sql = """
+        SELECT d.diagnosis, d.timestamp
+        FROM diagnoses d
+        JOIN patients p ON d.patient_id = p.id
+        JOIN users u ON p.user_id = u.id
+        WHERE u.id = ?
+        ORDER BY d.timestamp DESC;
+        """;
+        try (Connection c = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = c.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
+                System.out.println("📖 История болезней:");
+                boolean found = false;
                 while (rs.next()) {
-                    System.out.printf("[%s] %s%n", rs.getTimestamp("record_date"), rs.getString("description"));
+                    found = true;
+                    System.out.println("– " + rs.getString("diagnosis") + " (" + rs.getTimestamp("timestamp") + ")");
+                }
+                if (!found) {
+                    System.out.println("Нет записей.");
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении истории:");
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("❌ Ошибка при получении истории:");
         }
     }
+
 
     // Добавить диагноз (запись в историю)
     public void addDiagnosis(int patientId, String description) {
@@ -144,7 +209,19 @@ public class DoctorDAO {
             System.out.println("✔ Диагноз добавлен.");
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении диагноза:");
-            e.printStackTrace();
         }
+    }
+    public int getPatientIdByUserId(int userId) {
+        String sql = "SELECT id FROM patients WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении ID пациента по user_id:");
+        }
+        return -1;
     }
 }

@@ -30,7 +30,6 @@ public class NurseDAO {
                         rs.getTimestamp("assigned_date")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         return tasks;
@@ -54,7 +53,6 @@ public class NurseDAO {
                 System.out.println("❌ Поручение не найдено.");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -79,7 +77,6 @@ public class NurseDAO {
                         rs.getTimestamp("completed_date")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         return tasks;
@@ -106,9 +103,19 @@ public class NurseDAO {
                         rs.getString("rhesus")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         }
 
         return patients;
+    }
+    public int getNurseIdByUserId(int userId) throws SQLException {
+        String sql = "SELECT id FROM nurses WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+                else return -1;
+            }
+        }
     }
 }

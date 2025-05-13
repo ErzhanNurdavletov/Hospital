@@ -53,7 +53,6 @@ public class UserDAO {
                 return -1;
             }
             System.err.println("Ошибка при добавлении пользователя:");
-            e.printStackTrace();
         }
         return -1;
     }
@@ -73,8 +72,20 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении пользователей:");
-            e.printStackTrace();
         }
         return users;
+    }
+    public int getUserIdByUsername(String username) {
+        String sql = "SELECT id FROM users WHERE username = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setString(1, username);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении user_id:");
+        }
+        return -1;
     }
 }

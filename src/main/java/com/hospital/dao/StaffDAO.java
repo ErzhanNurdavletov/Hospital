@@ -22,7 +22,6 @@ public class StaffDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении списка медсестёр:");
-            e.printStackTrace();
         }
     }
 
@@ -39,7 +38,6 @@ public class StaffDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении списка врачей:");
-            e.printStackTrace();
         }
     }
 
@@ -56,7 +54,6 @@ public class StaffDAO {
             System.out.println("✔ Медсестра добавлена: " + fullName);
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении медсестры:");
-            e.printStackTrace();
         }
     }
 
@@ -73,7 +70,6 @@ public class StaffDAO {
             System.out.println("✔ Лечащий врач добавлен: " + fullName);
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении врача:");
-            e.printStackTrace();
         }
     }
 
@@ -88,7 +84,6 @@ public class StaffDAO {
             else System.out.println("❌ Медсестра не найдена.");
         } catch (SQLException e) {
             System.err.println("Ошибка при удалении медсестры:");
-            e.printStackTrace();
         }
     }
 
@@ -103,23 +98,22 @@ public class StaffDAO {
             else System.out.println("❌ Врач не найден.");
         } catch (SQLException e) {
             System.err.println("Ошибка при удалении врача:");
-            e.printStackTrace();
         }
     }
 
-    // Количество пациентов
-    public int getPatientCount() {
-        String sql = "SELECT COUNT(*) AS cnt FROM patients";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next()) return rs.getInt("cnt");
-        } catch (SQLException e) {
-            System.err.println("Ошибка при подсчёте пациентов:");
-            e.printStackTrace();
-        }
-        return 0;
-    }
+//    // Количество пациентов
+//    public int getPatientCount() {
+//        String sql = "SELECT COUNT(*) AS cnt FROM patients";
+//        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+//             Statement stmt = conn.createStatement();
+//             ResultSet rs = stmt.executeQuery(sql)) {
+//            if (rs.next()) return rs.getInt("cnt");
+//        } catch (SQLException e) {
+//            System.err.println("Ошибка при подсчёте пациентов:");
+//            e.printStackTrace();
+//        }
+//        return 0;
+//    }
 
     // Сотрудник с макс. зарплатой
     public String getMaxSalaryStaff() {
@@ -136,7 +130,6 @@ public class StaffDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при поиске макс. зарплаты:");
-            e.printStackTrace();
         }
         return "Данных нет";
     }
@@ -156,7 +149,6 @@ public class StaffDAO {
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при поиске мин. зарплаты:");
-            e.printStackTrace();
         }
         return "Данных нет";
     }
