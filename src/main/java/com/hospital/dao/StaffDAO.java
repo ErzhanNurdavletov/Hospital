@@ -1,8 +1,6 @@
 package com.hospital.dao;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class StaffDAO {
     private static final String URL = "jdbc:postgresql://localhost:5432/hospital_db";
@@ -86,6 +84,26 @@ public class StaffDAO {
             System.err.println("Ошибка при удалении медсестры:");
         }
     }
+    public void deleteNurseCascade(int userId) throws SQLException {
+        NurseDAO dao = new NurseDAO();
+        int nurseId = dao.getNurseIdByUserId(userId);
+        if (nurseId < 0) {
+            System.out.println("❌ Медсестра не найдена.");
+            return;
+        }
+        // 1) Удаляем её задания
+        String delTasks = "DELETE FROM nurse_tasks WHERE nurse_id = ?";
+        try (Connection c = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement st = c.prepareStatement(delTasks)) {
+            st.setInt(1, nurseId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Ошибка при удалении аккаунта медсестры");
+        }
+        // 2) Удаляем профиль
+        deleteNurse(userId); // ваш существующий метод
+    }
+
 
     // Удалить врача по user_id
     public void deleteDoctor(int userId) {
@@ -100,20 +118,6 @@ public class StaffDAO {
             System.err.println("Ошибка при удалении врача:");
         }
     }
-
-//    // Количество пациентов
-//    public int getPatientCount() {
-//        String sql = "SELECT COUNT(*) AS cnt FROM patients";
-//        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-//             Statement stmt = conn.createStatement();
-//             ResultSet rs = stmt.executeQuery(sql)) {
-//            if (rs.next()) return rs.getInt("cnt");
-//        } catch (SQLException e) {
-//            System.err.println("Ошибка при подсчёте пациентов:");
-//            e.printStackTrace();
-//        }
-//        return 0;
-//    }
 
     // Сотрудник с макс. зарплатой
     public String getMaxSalaryStaff() {
@@ -152,4 +156,17 @@ public class StaffDAO {
         }
         return "Данных нет";
     }
+    //    // Количество пациентов
+//    public int getPatientCount() {
+//        String sql = "SELECT COUNT(*) AS cnt FROM patients";
+//        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+//             Statement stmt = conn.createStatement();
+//             ResultSet rs = stmt.executeQuery(sql)) {
+//            if (rs.next()) return rs.getInt("cnt");
+//        } catch (SQLException e) {
+//            System.err.println("Ошибка при подсчёте пациентов:");
+//            e.printStackTrace();
+//        }
+//        return 0;
+//    }
 }

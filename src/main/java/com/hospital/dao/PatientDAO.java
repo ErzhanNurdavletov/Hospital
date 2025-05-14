@@ -4,16 +4,13 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PatientDAO {
-    private static final String URL = "jdbc:postgresql://localhost:5432/hospital_db";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "Erzhan123@"; // замените на ваш пароль
+public class PatientDAO extends BaseDAO {
 
     // Создание пациента
     public void createPatient(int userId, String fullName, Date birthDate,
                               int heightCm, int weightKg, String bloodGroup, String rhesus) {
         String sql = "INSERT INTO patients(user_id, full_name, birth_date, height_cm, weight_kg, blood_group, rhesus) VALUES (?,?,?,?,?,?,?)";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setString(2, fullName);
@@ -32,7 +29,7 @@ public class PatientDAO {
     // Личная информация пациента
     public void showPersonalInfo(int patientId) {
         String sql = "SELECT user_id, full_name, birth_date, height_cm, weight_kg, blood_group, rhesus FROM patients WHERE id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, patientId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -53,7 +50,7 @@ public class PatientDAO {
     // История болезни пациента
     public void showMedicalHistory(int patientId) {
         String sql = "SELECT record_date, description FROM medical_history WHERE patient_id = ? ORDER BY record_date DESC";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, patientId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -69,7 +66,7 @@ public class PatientDAO {
     // Последний диагноз пациента
     public String getLatestDiagnosis(int patientId) {
         String sql = "SELECT description FROM medical_history WHERE patient_id = ? ORDER BY record_date DESC LIMIT 1";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, patientId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -87,7 +84,7 @@ public class PatientDAO {
     public List<String> getAllPatients() {
         List<String> patients = new ArrayList<>();
         String sql = "SELECT user_id, full_name, (SELECT username FROM users u WHERE u.id = p.user_id) AS login FROM patients p";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -105,7 +102,7 @@ public class PatientDAO {
     // Удаление пациента по user_id
     public void deletePatient(int userId) {
         String sql = "DELETE FROM patients WHERE user_id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             int cnt = stmt.executeUpdate();
@@ -119,7 +116,7 @@ public class PatientDAO {
     // Получить patient_id по user_id
     public int getPatientIdByUserId(int userId) {
         String sql = "SELECT id FROM patients WHERE user_id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {

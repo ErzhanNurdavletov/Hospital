@@ -19,7 +19,7 @@ public class MainMenu {
             System.out.println("\n=== АИС «Больница» ===");
             System.out.println("0. Выход");
             System.out.print("Введите тип аккаунта (patient/doctor/medassistant/maindoctor): ");
-            String type = scanner.nextLine().trim();
+            String type = scanner.nextLine().trim().toLowerCase();
             if ("0".equals(type)) {
                 System.out.println("Программа завершена.");
                 break;
@@ -39,7 +39,7 @@ public class MainMenu {
             int currentUserId = userDAO.getUserIdByUsername(login);
 
             switch (role) {
-                case "patient"      -> showPatientMenu(scanner);
+                case "patient"      -> showPatientMenu(scanner, currentUserId);
                 case "doctor"       -> showDoctorMenu(scanner);
                 case "medassistant" -> showNurseMenu(scanner, currentUserId);
                 case "maindoctor"   -> showMainDoctorMenu(scanner);
@@ -49,24 +49,14 @@ public class MainMenu {
         scanner.close();
     }
 
-    private static void showPatientMenu(Scanner scanner) {
+    private static void showPatientMenu(Scanner scanner, int userId) {
         PatientDAO patientDAO = new PatientDAO();
-        int userId;
-        while (true) {
-            System.out.print("Введите ваш user_id: ");
-            try {
-                userId = Integer.parseInt(scanner.nextLine().trim());
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Введите корректный числовой ID.");
-            }
-        }
+
         int patientId = patientDAO.getPatientIdByUserId(userId);
         if (patientId < 0) {
             System.out.println("❌ Пациент не найден.");
             return;
         }
-
         while (true) {
             System.out.println("\n--- Меню пациента ---");
             System.out.println("1. Показать мой диагноз");
@@ -199,23 +189,22 @@ public class MainMenu {
 
         while (true) {
             System.out.println("\n--- Меню медсестры ---");
-            System.out.println("1. Поиск пациента");
-            System.out.println("2. Показать не завершённые поручения");
-            System.out.println("3. Выполнить поручение");
-            System.out.println("4. Показать завершённые поручения");
+            System.out.println("1. Показать не завершённые поручения");
+            System.out.println("2. Выполнить поручение");
+            System.out.println("3. Показать завершённые поручения");
             System.out.println("0. Назад");
             System.out.print("Выбор: ");
             String c = scanner.nextLine().trim();
             if ("0".equals(c)) break;
             switch (c) {
-                case "1" -> {
-                    System.out.print("Часть имени: ");
-                    String part = scanner.nextLine().trim();
-                    if (!part.isEmpty()) dao.findPatientsByName(part).forEach(p -> System.out.println("– " + p));
-                    else System.out.println("❌ Строка не должна быть пустой.");
-                }
-                case "2" -> dao.getTasksForNurse(nurseId).forEach(t -> System.out.println("– " + t));
-                case "3" -> {
+//                case "1" -> {
+//                    System.out.print("Часть имени: ");
+//                    String part = scanner.nextLine().trim();
+//                    if (!part.isEmpty()) dao.findPatientsByName(part).forEach(p -> System.out.println("– " + p));
+//                    else System.out.println("❌ Строка не должна быть пустой.");
+//                }
+                case "1" -> dao.getTasksForNurse(nurseId).forEach(t -> System.out.println("– " + t));
+                case "2" -> {
                     int tid;
                     while (true) {
                         System.out.print("Введите ID поручения: ");
@@ -224,7 +213,7 @@ public class MainMenu {
                     }
                     dao.completeTask(tid);
                 }
-                case "4" -> dao.getCompletedTasksForNurse(nurseId).forEach(t -> System.out.println("– " + t));
+                case "3" -> dao.getCompletedTasksForNurse(nurseId).forEach(t -> System.out.println("– " + t));
                 default -> System.out.println("❌ Неверный ввод.");
             }
         }
@@ -438,7 +427,11 @@ public class MainMenu {
                         try { uid = Integer.parseInt(scanner.nextLine().trim()); break; }
                         catch (NumberFormatException e) { System.out.println("❌ Введите число."); }
                     }
-                    staffDAO.deleteNurse(uid);
+                    try {
+                        staffDAO.deleteNurseCascade(uid);
+                    } catch (Exception e) {
+                        System.out.println("Ошибка при попытке удаления медсестры");
+                    }
                 }
                 case "11" -> {
                     int uid;

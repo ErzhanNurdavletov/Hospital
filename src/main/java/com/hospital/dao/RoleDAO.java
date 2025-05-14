@@ -20,7 +20,6 @@ public class RoleDAO {
             System.out.println("✔ Роль добавлена: " + name);
         } catch (SQLException e) {
             System.err.println("Ошибка добавления роли:");
-            e.printStackTrace();
         }
     }
 
@@ -38,7 +37,6 @@ public class RoleDAO {
 
         } catch (SQLException e) {
             System.err.println("Ошибка получения ролей:");
-            e.printStackTrace();
         }
 
         return roles;

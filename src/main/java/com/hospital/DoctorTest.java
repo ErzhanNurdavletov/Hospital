@@ -2,7 +2,7 @@ package com.hospital;
 
 import com.hospital.dao.UserDAO;
 
-public class DoctorUserSetup {
+public class DoctorTest {
     public static void main(String[] args) {
         UserDAO udao = new UserDAO();
         udao.createUser("doc1", "pass", "doctor");

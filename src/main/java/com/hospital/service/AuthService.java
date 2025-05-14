@@ -32,7 +32,6 @@ public class AuthService {
 
         } catch (SQLException e) {
             System.err.println("Ошибка при входе:");
-            e.printStackTrace();
             return null;
         }
     }

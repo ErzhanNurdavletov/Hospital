@@ -24,7 +24,6 @@ public class DatabaseConnection {
             }
         } catch (SQLException ex) {
             System.err.println("Ошибка при подключении:");
-            ex.printStackTrace();
         }
     }
 }
